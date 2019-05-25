@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"net/http"
 	"log"
 	"encoding/json"
@@ -85,10 +86,15 @@ func ws(w http.ResponseWriter, r *http.Request) {
 
 
 func main() {
-	log.Println("Server is running")
+	host := "localhost:5000"
+	if len(os.Args) > 1 {
+		host = os.Args[1]
+	}
+	log.Println("Server is running at:", host)
+	log.Printf("Access http://%s/static/rtc.html", host)
 	http.HandleFunc("/ws", ws)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
-	log.Fatal(http.ListenAndServe("localhost:8000", nil))
+	log.Fatal(http.ListenAndServe(host, nil))
 }
 
 

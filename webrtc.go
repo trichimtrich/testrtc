@@ -1,103 +1,12 @@
 package main
 
 import (
-	"os"
-	"net/http"
 	"log"
-	"encoding/json"
 	"encoding/base64"
-
 	"github.com/pion/webrtc"
-	"github.com/gorilla/websocket"
+	"encoding/json"
 
 )
-
-type WSPacket struct {
-	ID   string `json:"id"`
-	Data string `json:"data"`
-}
-
-
-var upgrader = websocket.Upgrader{} // use default options
-
-
-func ws(w http.ResponseWriter, r *http.Request) {
-	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
-	c, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Print("upgrade:", err)
-		return
-	}
-	defer func() {
-		log.Println("Client closed")
-		c.Close()
-	}()
-
-	log.Println("New websocket client")
-
-	for {
-		_, message, err := c.ReadMessage()
-		if err != nil {
-			log.Println("read:", err)
-			break
-		}
-		log.Printf("recv: %s", message)
-
-		req := WSPacket{}
-		err = json.Unmarshal(message, &req)
-
-		if err != nil {
-			log.Println("json decode:", err)
-			break
-		}
-
-		resp := WSPacket{ID: "", Data: ""}
-		switch (req.ID) {
-		case "sdp":
-			sdpSession, err := newRTC(req.Data)
-			if err != nil {
-				resp.ID = "error"
-				resp.Data = "error while creating RTC client"
-			} else {
-				resp.ID = "sdp"
-				resp.Data = sdpSession
-			}
-			break
-		case "hoho":
-			log.Println("hoho")
-			break
-		}
-
-		if resp.ID != "" {
-			respBytes, err := json.Marshal(resp)
-			if err != nil {
-				log.Println("json encode:", err)
-				break
-			}
-
-			err = c.WriteMessage(websocket.TextMessage, respBytes)
-			if err != nil {
-				log.Println("write:", err)
-				break
-			}
-		}
-	}
-}
-
-
-func main() {
-	host := "localhost:5000"
-	if len(os.Args) > 1 {
-		host = os.Args[1]
-	}
-	log.Println("Server is running at:", host)
-	log.Printf("Access http://%s/static/rtc.html", host)
-	http.HandleFunc("/ws", ws)
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
-	log.Fatal(http.ListenAndServe(host, nil))
-}
-
-
 
 // Encode encodes the input in base64
 func Encode(obj interface{}) (string, error) {

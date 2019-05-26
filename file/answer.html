@@ -2,7 +2,7 @@
 
 <h1>Im "createAnswer"</h1>
 <p>
-Partner ID: <input id="txtID" value="0"><input id="txtData" value="test message"><button onclick="sendTest()">Send Test Msg</button>
+Partner ID: <input id="txtID" placeholder="Input partner ID here..."><input id="txtData" value="test message"><button onclick="sendTest()">Send Test Msg</button>
 </p>
 <p>
 Im waiting for partner to send offer...
@@ -35,7 +35,7 @@ Im waiting for partner to send offer...
 
         // decode remoteSDP
         try {
-            var remoteSession = JSON.parse(atob(remoteSDP));
+            var remoteDesc = JSON.parse(atob(remoteSDP));
         } catch(err) {
             log("[!] Cannot unserialize remoteSDP");
             log(err);
@@ -45,17 +45,18 @@ Im waiting for partner to send offer...
         log("Unserialize offer SDP");
         
         // set remote sdp
-        rtcPeer.setRemoteDescription(new RTCSessionDescription(remoteSDP))
+        rtcPeer.setRemoteDescription(new RTCSessionDescription(remoteDesc))
         .then(() => {
             log("Set remote description - OK. Create Answer ...");
             rtcPeer.createAnswer()
-            .then(function (answer) {
-                log("Got local description via createAnswer");
+            .then(function (localDesc) {
+                log("Got local description via createAnswer. Sending answer...");
 
                 // got local description?
-                localSDP = btoa(JSON.stringify(answer));
+                localSDP = btoa(JSON.stringify(localDesc));
 
                 // send sdp back?
+                wsConn.sendMail(partnerID, "answer_sdp", localSDP);
             })
         })
         .catch(err => {
@@ -67,7 +68,6 @@ Im waiting for partner to send offer...
 
     function sendTest() {
         if (wsConn) {
-            partnerID = document.getElementById("txtID").value;
             log(`Send test data to partner ${partnerID}`);
             data = document.getElementById("txtData").value;
             wsConn.sendMail(partnerID, "test", data);

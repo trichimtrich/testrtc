@@ -3,7 +3,7 @@
 <h1>Im "createOffer"</h1>
 <p>Make sure partner is on and ready to receive "offer" !</p>
 <p>
-Partner ID: <input id="txtID" value="0"><input id="txtData" value="test message"><button onclick="sendTest()">Send Test Msg</button>
+Partner ID: <input id="txtID" placeholder="Input partner ID here..."><input id="txtData" value="test message"><button onclick="sendTest()">Send Test Msg</button>
 </p>
 <p>
 <button onclick="startOffer()">Start sending offer</button>
@@ -18,13 +18,34 @@ Partner ID: <input id="txtID" value="0"><input id="txtData" value="test message"
             case "test":
                 log(`Mail test: ${mailObj["data"]}`, true);
                 break;
+
+            case "answer_sdp":
+                log("Recv answer sdp", true);
+                remoteSDP = mailObj["data"];
+                // decode remoteSDP
+                try {
+                    var remoteDesc = JSON.parse(atob(remoteSDP));
+                } catch(err) {
+                    log("[!] Cannot unserialize remoteSDP");
+                    log(err);
+                    log(remoteSDP);
+                    return;
+                }
+
+                rtcPeer.setRemoteDescription(remoteDesc)
+                .then(() => {
+                    log("Set remote description - OK");
+                });
+
+                break;
+
         }
     }
 
     //// WebRTC handler with my Role
     function startOffer() {
         log("startOffer...");
-
+        
         basicRTC();
 
         // OUR ROLE - createOffer
@@ -32,16 +53,16 @@ Partner ID: <input id="txtID" value="0"><input id="txtData" value="test message"
             offerToReceiveVideo: true,
             offerToReceiveAudio: true,
         })
-        .then(desc => {
+        .then(localDesc => {
             log("Got local description via createOffer");
-            rtcPeer.setLocalDescription(desc)
+            rtcPeer.setLocalDescription(localDesc)
             .then(e => {
                 // serialize local description
-                localSDP = btoa(JSON.stringify(desc));
+                localSDP = btoa(JSON.stringify(localDesc));
                 log("Set local description - OK. Sending offer...");
 
                 // send sdp to partner
-                var partnerID = document.getElementById("txtID").value;
+                
                 wsConn.sendMail(partnerID, "offer_sdp", localSDP);
             })
             .catch(err => {
@@ -56,16 +77,7 @@ Partner ID: <input id="txtID" value="0"><input id="txtData" value="test message"
     }
 
 
-    function sendTest() {
-        if (wsConn) {
-            partnerID = document.getElementById("txtID").value;
-            log(`Send test data to partner ${partnerID}`);
-            data = document.getElementById("txtData").value;
-            wsConn.sendMail(partnerID, "test", data);
-        } else {
-            log("WebSocket is not connected");
-        }
-    }
+    
 
 
 

@@ -1,10 +1,26 @@
 //// Declare in global scope
-let wsConn, myID;
+let wsConn, myID, partnerID;
 let rtcPeer, localSDP, remoteSDP;
 
 
+//// General
+function sendTest() {
+    if (wsConn) {
+        log(`Send test data to partner ${partnerID}`);
+        data = document.getElementById("txtData").value;
+        wsConn.sendMail(partnerID, "test", data);
+    } else {
+        log("WebSocket is not connected");
+    }
+}
+
+document.getElementById("txtID").onchange = function (event) {
+    getPartner();
+}
+
+
 //// Utils
-log = (msg, isMail) => {
+function log (msg, isMail) {
     var pp = document.createElement("p");
     pp.textContent= msg;
     if (isMail != undefined) {
@@ -13,6 +29,16 @@ log = (msg, isMail) => {
     document.getElementById("log").append(pp);
 
     console.log(msg);
+}
+
+function getPartner() {
+    partnerID = document.getElementById("txtID").value;
+    return partnerID;
+}
+
+function setPartner(idx) {
+    partnerID = idx;
+    document.getElementById("txtID").value = idx;
 }
 
 //// Alter default 'send' function a bit
@@ -48,6 +74,8 @@ WebSocket.prototype.sendMail = function (partnerID, id, data) {
 
 
 //// WebSocket stuffs
+let pingTimer = null;
+
 wsConn = new WebSocket(`ws://${location.host}/ws`);
 
 wsConn.onopen = function () {
@@ -55,11 +83,22 @@ wsConn.onopen = function () {
     this.send("hello"); // to get myID
 
     // create ping interval (every second) to keep connection
-    setInterval(() => { this.send("ping"); }, 1000);
+    pingTimer = setInterval(() => { this.send("ping"); }, 1000);
 }
 
-wsConn.onerror = error => { log(`Websocket error: ${error}`); }
-wsConn.onclose = () => { log("Websocket closed"); }
+wsConn.onerror = error => {
+    log(`Websocket error: ${error}`); 
+    if (pingTimer) {
+        clearInterval(pingTimer);
+    }
+}
+
+wsConn.onclose = () => { 
+    log("Websocket closed");
+    if (pingTimer) {
+        clearInterval(pingTimer);
+    }
+}
 
 // ws main loop
 wsConn.onmessage = function (e) {
@@ -81,6 +120,7 @@ wsConn.onmessage = function (e) {
             log(`Got mail from <${d["cid"]}>`);
             try {
                 mailObj = JSON.parse(d["data"]);
+                setPartner(d["cid"]);
                 handleMail(mailObj, d["cid"]);
             } catch {
                 // test data maybe, not in JSON format

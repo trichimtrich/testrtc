@@ -1,0 +1,86 @@
+<h1>Im "createAnswer"</h1>
+<p>
+Partner ID: <input id="txtID" value="0"><input id="txtData" value="test message"><button onclick="sendTest()">Send Test Msg</button>
+</p>
+<p>
+<button onclick="start()">Start my role</button>
+</p>
+<div id="log" style="background-color: lightcoral"></div>
+
+<script src="/file/common.js"></script>
+<script>
+    //// WebRTC handlers and my Role
+    function start() {
+        // ...
+        try {
+            rtcPeer.close();
+        } catch {
+            // ...
+        }
+
+        rtcPeer = new RTCPeerConnection({
+            iceServers: [
+                {
+                    urls: [
+                        'stun:stun.l.google.com:19302',
+                        'stun:stun1.l.google.com:19302'
+                    ],
+                },
+            ],
+        });
+
+
+        // keep track on state, 'connected' => our GOAL!
+        rtcPeer.oniceconnectionstatechange = function(event) {
+            log(`iceConnectionState: ${this.iceConnectionState}`);
+
+            if (this.iceConnectionState === "connected") { }
+            else if (this.iceConnectionState === "completed") { }
+            else if (this.iceConnectionState === "failed") { }
+            else if (this.iceConnectionState === "disconnected") { }
+        }
+
+
+        // candidate packet from STUN
+        rtcPeer.onicecandidate = function(event) {
+            if (event.candidate === null) {
+                // ...
+            } else {
+                log(`Got icecandidate: ${JSON.stringify(event.candidate)}`);
+            }
+        }
+
+        // OUR ROLE - createOffer
+        rtcPeer.createOffer({
+            offerToReceiveVideo: true,
+            offerToReceiveAudio: true,
+        })
+        .then(function(d) {
+            this
+            .setLocalDescription(d)
+            .then(function (e) {
+                // local descriptor
+                localSession = btoa(JSON.stringify(d));
+                log("Set local description OK");
+
+                // send sdp to partner?
+            })
+            .catch(log);
+        });
+    }
+
+
+    function sendTest() {
+        if (wsConn) {
+            clientID = partnerID();
+            log(`Send test data to partner ${clientID}`);
+            data = document.getElementById("txtData").value;
+            wsConn.send("mail", data, clientID);
+        } else {
+            log("WebSocket is not connected");
+        }
+    }
+
+
+
+</script>

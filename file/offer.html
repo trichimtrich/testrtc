@@ -1,0 +1,60 @@
+<link rel="stylesheet" href="/file/common.css">
+
+<h1>Im "createOffer"</h1>
+<p>
+Partner ID: <input id="txtID" value="0"><input id="txtData" value="test message"><button onclick="sendTest()">Send Test Msg</button>
+</p>
+<p>
+<button onclick="start()">Start my role</button>
+</p>
+<div id="log" style="background-color: lightcoral"></div>
+
+<script src="/file/common.js"></script>
+<script>
+    //// WebSocket handler with my role
+    function handleMail(mailObj, senderID) {
+        switch (mailObj["id"]) {
+            case "test":
+                log(`Mail test: ${mailObj["data"]}`, true);
+                break;
+        }
+    }
+
+    //// WebRTC handler with my Role
+    function start() {
+        basicRTC();
+
+        // OUR ROLE - createOffer
+        rtcPeer.createOffer({
+            offerToReceiveVideo: true,
+            offerToReceiveAudio: true,
+        })
+        .then(function(d) {
+            this
+            .setLocalDescription(d)
+            .then(function (e) {
+                // local descriptor
+                localSession = btoa(JSON.stringify(d));
+                log("Set local description OK");
+
+                // send sdp to partner?
+            })
+            .catch(log);
+        });
+    }
+
+
+    function sendTest() {
+        if (wsConn) {
+            partnerID = document.getElementById("txtID").value;
+            log(`Send test data to partner ${partnerID}`);
+            data = document.getElementById("txtData").value;
+            wsConn.sendMail(partnerID, "test", data);
+        } else {
+            log("WebSocket is not connected");
+        }
+    }
+
+
+
+</script>

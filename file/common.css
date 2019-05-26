@@ -1,0 +1,8 @@
+#log {
+    background-color: lightcoral;
+}
+
+#log .mail {
+    background-color: lightgrey;
+    font-style: italic;
+}

@@ -91,6 +91,8 @@ func clientLoop(conn *websocket.Conn, done chan struct{}, partnerID string) {
 		case "mail":
 			log.Printf("Got mail from <%s>: %s\n", req.ClientID, req.Data)
 
+		case "offer_sdp":
+
 		}
 	}
 }

@@ -13,7 +13,7 @@ var clientPool map[string]*websocket.Conn
 
 func runServer(host string) {
 	log.Println("Run as 'SERVER' at:", host)
-	log.Printf("Access http://%s/file/recv.html", host)
+	log.Printf("Access directory http://%s/file/", host)
 
 	clientPool = make(map[string]*websocket.Conn)
 

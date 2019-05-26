@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
 	"log"
+	"strings"
 )
 
 type WSPacket struct {
@@ -48,7 +49,27 @@ func recvMessage(conn *websocket.Conn, req *WSPacket) error {
 	return nil
 }
 
+
 func generateID() string {
 	// no need secure :3
 	return strconv.Itoa(rand.Intn(100))
+}
+
+
+func sanitizeWsURL(host string) string {
+	// http://localhost:5000/xyz -> localhost:5000/xyz
+	idx := strings.Index(host, "://")
+	if idx != -1 {
+		host = host[idx + 3:]
+	}
+
+	// localhost:5000/xyz -> localhost:5000
+	if strings.Index(host, "/") != -1 {
+		host = strings.Split(host, "/")[0]
+	}
+
+	// localhost:5000 -> http://localhost:5000/ws
+	host = "ws://" + host
+
+	return host
 }

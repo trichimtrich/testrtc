@@ -2,27 +2,18 @@ package main
 
 import (
 	"time"
-	"strings"
 	"log"
 	"github.com/gorilla/websocket"
 	"os"
 	"os/signal"
 )
 
-func runClient(host string) {
+func runClient(host string, partnerID string) {
 	// to Ctrl C
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	// localhost:5000 -> localhost:5000/ws
-	if !strings.HasSuffix(host, "/ws") {
-		host = strings.Split(host, "/")[0] + "/ws"
-	}
-
-	// localhost:5000/ws -> http://localhost:5000/ws
-	if !strings.HasPrefix(host, "http") {
-		host = "http://" + host
-	}
+	host = sanitizeWsURL(host)
 
 	log.Println("Run as 'CLIENT' to:", host)
 	conn, _, err := websocket.DefaultDialer.Dial(host, nil)
@@ -36,10 +27,17 @@ func runClient(host string) {
 	done := make(chan struct{})
 
 	// main Loop
-	go clientLoop(conn, done)
+	go clientLoop(conn, done, partnerID)
 
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
+
+	// send hello packet to get myID
+	err = sendMessage(conn, WSPacket{ID: "hello"})
+	if err != nil {
+		log.Println("[!] Cannot sendMessage[hello]")
+		return
+	}
 
 	// signal loop
 	for {
@@ -51,7 +49,7 @@ func runClient(host string) {
 		case <-ticker.C:
 			err = sendMessage(conn, WSPacket{ID: "ping"})
 			if err != nil {
-				log.Println("[!] Cannot sendMessage:", err)
+				log.Println("[!] Cannot sendMessage[ping]:", err)
 				return
 			}
 
@@ -63,16 +61,19 @@ func runClient(host string) {
 }
 
 
-func clientLoop(conn *websocket.Conn, done chan struct{}) {
+func clientLoop(conn *websocket.Conn, done chan struct{}, partnerID string) {
 	defer close(done)
 
 	log.Println("Enter client loop")
 	myID := ""
 	req := WSPacket{}
+
+	// if partnerID != "" -> create WebRTC first?
+
 	for {
 		err := recvMessage(conn, &req)
 		if err != nil {
-			log.Println("Cannot recvMessage:", err)
+			log.Println("[!] Cannot recvMessage:", err)
 			break
 		}
 

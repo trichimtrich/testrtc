@@ -17,7 +17,7 @@ func runServer(host string) {
 
 	clientPool = make(map[string]*websocket.Conn)
 
-	http.HandleFunc("/ws", serverHandler)
+	http.HandleFunc("/", serverHandler)
 	http.Handle("/file/", http.StripPrefix("/file/", http.FileServer(http.Dir("./file"))))
 
 	log.Fatal(http.ListenAndServe(host, nil))
@@ -42,10 +42,12 @@ func serverHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
+
+	// add connection ID to pool
 	clientPool[myID] = conn
 
 	defer func() {
-		// remove id map in pool
+		// remove connection ID in pool
 		if myID != "" {
 			if _, ok := clientPool[myID]; ok {
 				delete(clientPool, myID)
@@ -59,7 +61,9 @@ func serverHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("<%s> New WebSocket created\n", myID)
 
 	req := WSPacket{}
+
 	// main loop
+	Loop:
 	for {
 		err = recvMessage(conn, &req)
 		if err != nil {
@@ -67,16 +71,21 @@ func serverHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		resp := WSPacket{ID: "", Data: "", ClientID: ""}
 		switch (req.ID) {
 		case "ping":
-			resp.ID = "pong"
-			resp.Data = ""
+			err = sendMessage(conn, WSPacket{ID: "pong"})
+			if err != nil {
+				log.Printf("<%s> [!] Cannot sendMessage[ping]: %s\n", myID, err)
+				break Loop
+			}
 
 		case "hello":
 			log.Printf("<%s> Got hello packet\n", myID)
-			resp.ID = "hello"
-			resp.Data = myID
+			err = sendMessage(conn, WSPacket{ID: "hello", Data: myID})
+			if err != nil {
+				log.Printf("<%s> [!] Cannot sendMessage[hello]: %s\n", myID, err)
+				break Loop
+			}
 
 		case "mail":
 			if conn2, ok := clientPool[req.ClientID]; ok {
@@ -87,23 +96,21 @@ func serverHandler(w http.ResponseWriter, r *http.Request) {
 					ClientID: myID,
 				})
 				if err != nil {
-					log.Printf("<%s> [!] Cannot send mail to [%s]\n", myID, req.ClientID)
-					resp.ID = "error"
-					resp.Data = "error while sending mail"
+					log.Printf("<%s> [!] Cannot send mail to [%s]: %s\n", myID, req.ClientID, err)
+					err = sendMessage(conn, WSPacket{ID: "error", Data: "error while sending mail to partner"})
+					if err != nil {
+						log.Printf("<%s> [!] Cannot sendMessage[error]: %s\n", myID, err)
+						break Loop
+					}
 				}
 			} else {
-				resp.ID = "error"
-				resp.Data = "invalid client ID"
+				err = sendMessage(conn, WSPacket{ID: "error", Data: "invalid partner ID"})
+				if err != nil {
+					log.Printf("<%s> [!] Cannot sendMessage[error]: %s\n", myID, err)
+					break Loop
+				}
 			}
 
-		}
-
-		if resp.ID != "" {
-			err = sendMessage(conn, resp)
-			if err != nil {
-				log.Printf("<%s> [!] Cannot sendMessage: %s\n", myID, err)
-				break
-			}
 		}
 	}
 }

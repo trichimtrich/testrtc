@@ -11,4 +11,4 @@ RUN apt-get update
 RUN go get "github.com/pion/webrtc"
 RUN go get "github.com/gorilla/websocket"
 
-EXPOSE 5000
+CMD ["go", "run", "testrtc.go"]

@@ -1,4 +1,6 @@
-<h1>Im "createAnswer"</h1>
+<link rel="stylesheet" href="/file/common.css">
+
+<h1>Im "createOffer"</h1>
 <p>
 Partner ID: <input id="txtID" value="0"><input id="txtData" value="test message"><button onclick="sendTest()">Send Test Msg</button>
 </p>
@@ -9,46 +11,18 @@ Partner ID: <input id="txtID" value="0"><input id="txtData" value="test message"
 
 <script src="/file/common.js"></script>
 <script>
-    //// WebRTC handlers and my Role
+    //// WebSocket handler with my role
+    function handleMail(mailObj, senderID) {
+        switch (mailObj["id"]) {
+            case "test":
+                log(`Mail test: ${mailObj["data"]}`, true);
+                break;
+        }
+    }
+
+    //// WebRTC handler with my Role
     function start() {
-        // ...
-        try {
-            rtcPeer.close();
-        } catch {
-            // ...
-        }
-
-        rtcPeer = new RTCPeerConnection({
-            iceServers: [
-                {
-                    urls: [
-                        'stun:stun.l.google.com:19302',
-                        'stun:stun1.l.google.com:19302'
-                    ],
-                },
-            ],
-        });
-
-
-        // keep track on state, 'connected' => our GOAL!
-        rtcPeer.oniceconnectionstatechange = function(event) {
-            log(`iceConnectionState: ${this.iceConnectionState}`);
-
-            if (this.iceConnectionState === "connected") { }
-            else if (this.iceConnectionState === "completed") { }
-            else if (this.iceConnectionState === "failed") { }
-            else if (this.iceConnectionState === "disconnected") { }
-        }
-
-
-        // candidate packet from STUN
-        rtcPeer.onicecandidate = function(event) {
-            if (event.candidate === null) {
-                // ...
-            } else {
-                log(`Got icecandidate: ${JSON.stringify(event.candidate)}`);
-            }
-        }
+        basicRTC();
 
         // OUR ROLE - createOffer
         rtcPeer.createOffer({
@@ -72,10 +46,10 @@ Partner ID: <input id="txtID" value="0"><input id="txtData" value="test message"
 
     function sendTest() {
         if (wsConn) {
-            clientID = partnerID();
-            log(`Send test data to partner ${clientID}`);
+            partnerID = document.getElementById("txtID").value;
+            log(`Send test data to partner ${partnerID}`);
             data = document.getElementById("txtData").value;
-            wsConn.send("mail", data, clientID);
+            wsConn.sendMail(partnerID, "test", data);
         } else {
             log("WebSocket is not connected");
         }

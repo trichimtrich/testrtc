@@ -1,6 +1,7 @@
 <link rel="stylesheet" href="/file/common.css">
 
 <h1>Im "createOffer"</h1>
+<p>Make sure partner is on and ready to receive "offer" !</p>
 <p>
 Partner ID: <input id="txtID" value="0"><input id="txtData" value="test message"><button onclick="sendTest()">Send Test Msg</button>
 </p>
@@ -38,6 +39,8 @@ Partner ID: <input id="txtID" value="0"><input id="txtData" value="test message"
                 log("Set local description OK");
 
                 // send sdp to partner?
+                partnerID = document.getElementById("txtID").value;
+                wsConn.sendMail(partnerID, "offer_sdp", localSession);
             })
             .catch(log);
         });

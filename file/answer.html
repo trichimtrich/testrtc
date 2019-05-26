@@ -1,15 +1,16 @@
-<link rel="stylesheet" href="/file/common.css">
+<link rel="stylesheet" href="/file/res/common.css">
 
-<h1>Im "createOffer"</h1>
+<h1>Im "createAnswer"</h1>
 <p>
 Partner ID: <input id="txtID" value="0"><input id="txtData" value="test message"><button onclick="sendTest()">Send Test Msg</button>
 </p>
 <p>
-<button onclick="start()">Start my role</button>
+Im waiting for partner to send offer...
+<!-- <button onclick="start()">Start my role</button> -->
 </p>
-<div id="log" style="background-color: lightcoral"></div>
+<div id="log"></div>
 
-<script src="/file/common.js"></script>
+<script src="/file/res/common.js"></script>
 <script>
     //// WebSocket handler with my role
     function handleMail(mailObj, senderID) {
@@ -17,30 +18,50 @@ Partner ID: <input id="txtID" value="0"><input id="txtData" value="test message"
             case "test":
                 log(`Mail test: ${mailObj["data"]}`, true);
                 break;
+
+            case "offer_sdp":
+                log("Recv offer sdp", true);
+                remoteSDP = mailObj["data"];
+                startAnswer();
+                break;
         }
     }
 
     //// WebRTC handler with my Role
-    function start() {
+    function startAnswer() {
+        log("startAnswer...");
+
         basicRTC();
 
-        // OUR ROLE - createOffer
-        rtcPeer.createOffer({
-            offerToReceiveVideo: true,
-            offerToReceiveAudio: true,
-        })
-        .then(function(d) {
-            this
-            .setLocalDescription(d)
-            .then(function (e) {
-                // local descriptor
-                localSession = btoa(JSON.stringify(d));
-                log("Set local description OK");
+        // decode remoteSDP
+        try {
+            var remoteSession = JSON.parse(atob(remoteSDP));
+        } catch(err) {
+            log("[!] Cannot unserialize remoteSDP");
+            log(err);
+            log(remoteSDP);
+            return;
+        }
+        log("Unserialize offer SDP");
+        
+        // set remote sdp
+        rtcPeer.setRemoteDescription(new RTCSessionDescription(remoteSDP))
+        .then(() => {
+            log("Set remote description - OK. Create Answer ...");
+            rtcPeer.createAnswer()
+            .then(function (answer) {
+                log("Got local description via createAnswer");
 
-                // send sdp to partner?
+                // got local description?
+                localSDP = btoa(JSON.stringify(answer));
+
+                // send sdp back?
             })
-            .catch(log);
-        });
+        })
+        .catch(err => {
+            log("[!] setRemoteDescription failed");
+            log(err);
+        })
     }
 
 

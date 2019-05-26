@@ -1,6 +1,6 @@
 //// Declare in global scope
 let wsConn, myID;
-let rtcPeer, localSession;
+let rtcPeer, localSDP, remoteSDP;
 
 
 //// Utils
@@ -63,7 +63,7 @@ wsConn.onclose = () => { log("Websocket closed"); }
 
 // ws main loop
 wsConn.onmessage = function (e) {
-    d = JSON.parse(e.data);
+    var d = JSON.parse(e.data);
     switch (d["id"]) {
         case "error":
             log(`[!] Error from server: ${d["data"]}`);
@@ -93,7 +93,7 @@ wsConn.onmessage = function (e) {
 
 //// Common RTC stuffs
 function basicRTC() {
-    // ...
+    // clean up previous webrtc session
     try {
         rtcPeer.close();
     } catch {

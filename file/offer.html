@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="/file/common.css">
+<link rel="stylesheet" href="/file/res/common.css">
 
 <h1>Im "createOffer"</h1>
 <p>Make sure partner is on and ready to receive "offer" !</p>
@@ -6,11 +6,11 @@
 Partner ID: <input id="txtID" value="0"><input id="txtData" value="test message"><button onclick="sendTest()">Send Test Msg</button>
 </p>
 <p>
-<button onclick="start()">Start my role</button>
+<button onclick="startOffer()">Start sending offer</button>
 </p>
-<div id="log" style="background-color: lightcoral"></div>
+<div id="log"></div>
 
-<script src="/file/common.js"></script>
+<script src="/file/res/common.js"></script>
 <script>
     //// WebSocket handler with my role
     function handleMail(mailObj, senderID) {
@@ -22,7 +22,9 @@ Partner ID: <input id="txtID" value="0"><input id="txtData" value="test message"
     }
 
     //// WebRTC handler with my Role
-    function start() {
+    function startOffer() {
+        log("startOffer...");
+
         basicRTC();
 
         // OUR ROLE - createOffer
@@ -30,19 +32,26 @@ Partner ID: <input id="txtID" value="0"><input id="txtData" value="test message"
             offerToReceiveVideo: true,
             offerToReceiveAudio: true,
         })
-        .then(function(d) {
-            this
-            .setLocalDescription(d)
-            .then(function (e) {
-                // local descriptor
-                localSession = btoa(JSON.stringify(d));
-                log("Set local description OK");
+        .then(desc => {
+            log("Got local description via createOffer");
+            rtcPeer.setLocalDescription(desc)
+            .then(e => {
+                // serialize local description
+                localSDP = btoa(JSON.stringify(desc));
+                log("Set local description - OK. Sending offer...");
 
-                // send sdp to partner?
-                partnerID = document.getElementById("txtID").value;
-                wsConn.sendMail(partnerID, "offer_sdp", localSession);
+                // send sdp to partner
+                var partnerID = document.getElementById("txtID").value;
+                wsConn.sendMail(partnerID, "offer_sdp", localSDP);
             })
-            .catch(log);
+            .catch(err => {
+                log("[!] setLocalDescription failed");
+                log(err);
+            });
+        })
+        .catch(err => {
+            log("[!] createOffer failed");
+            log(err);
         });
     }
 

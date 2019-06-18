@@ -33,6 +33,16 @@ func Decode(in string, obj interface{}) error {
 	return nil
 }
 
+
+func decodeIceCandidate(data string, ice *webrtc.ICECandidateInit) error {
+	err := json.Unmarshal([]byte(data), ice)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func newRTC(remoteSession string) (string, error) {
 	// Prepare the configuration
 	config := webrtc.Configuration{

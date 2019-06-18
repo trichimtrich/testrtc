@@ -7,7 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"github.com/pion/webrtc"
-
+	// "encoding/json"
 )
 
 
@@ -97,6 +97,7 @@ func clientLoop(conn *websocket.Conn, done chan struct{}, partnerID string) {
 	// Get Ice Candidate
 	peerConnection.OnICECandidate(func(iceCandidate *webrtc.ICECandidate) {
 		log.Println("Have candidate:", iceCandidate)
+		// var x webrtc.ICECandidateInit
 	})
 
 	// if there is a partnerID , we should be in createOffer role
@@ -136,8 +137,19 @@ func clientLoop(conn *websocket.Conn, done chan struct{}, partnerID string) {
 				log.Printf("> Mail test: %s\n", mailObj.Data)
 
 			case "ice":
-				// peerConnection.AddICECandidate
-				break
+				var ice webrtc.ICECandidateInit
+				err = decodeIceCandidate(mailObj.Data, &ice)
+				if err != nil {
+					log.Println("[!] Cannot decodeIceCandidate:", err)
+					break Loop
+				}
+				
+				err = peerConnection.AddICECandidate(ice)
+				if err != nil {
+					log.Println("[!] Cannot AddIceCandidate", err)
+					break Loop
+				}
+				log.Println("AddIceCandidate:", ice.Candidate)
 
 			case "offer_sdp":
 				offer := webrtc.SessionDescription{}

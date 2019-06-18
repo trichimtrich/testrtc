@@ -1,2 +1,2 @@
 #!/bin/bash
-go run testrtc.go
+go run .

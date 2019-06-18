@@ -6,7 +6,10 @@ import (
 	"github.com/gorilla/websocket"
 	"os"
 	"os/signal"
+	"github.com/pion/webrtc"
+
 )
+
 
 func runClient(host string, partnerID string) {
 	// to Ctrl C
@@ -68,8 +71,39 @@ func clientLoop(conn *websocket.Conn, done chan struct{}, partnerID string) {
 	myID := ""
 	req := WSPacket{}
 
-	// if partnerID != "" -> create WebRTC first?
+	// create WebRTC
+	config := webrtc.Configuration{
+		ICEServers: []webrtc.ICEServer{
+			{
+				URLs: []string{"stun:stun.l.google.com:19302"},
+			},
+		},
+	}
 
+	// Create a new RTCPeerConnection
+	peerConnection, err := webrtc.NewPeerConnection(config)
+	if err != nil {
+		log.Println("[!] Cannot NewPeerConnection:", err)
+		return
+	}
+	log.Println("Start new webrtc client")
+
+	// Set the handler for ICE connection state
+	// This will notify you when the peer has connected/disconnected
+	peerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
+		log.Printf("ICE Connection State has changed: [%s]\n", connectionState.String())
+	})
+
+	// Get Ice Candidate
+	peerConnection.OnICECandidate(func(iceCandidate *webrtc.ICECandidate) {
+		log.Println("Have candidate:", iceCandidate)
+	})
+
+	// if there is a partnerID , we should be in createOffer role
+	if partnerID != "" {
+	}
+
+	Loop:
 	for {
 		err := recvMessage(conn, &req)
 		if err != nil {
@@ -90,8 +124,65 @@ func clientLoop(conn *websocket.Conn, done chan struct{}, partnerID string) {
 		
 		case "mail":
 			log.Printf("Got mail from <%s>: %s\n", req.ClientID, req.Data)
+			var mailObj MailPacket
+			err = parseMail(req.Data, &mailObj)
+			if err != nil {
+				log.Println("[!] Cannot parseMail:", err)
+				break Loop
+			}
 
-		case "offer_sdp":
+			switch (mailObj.ID) {
+			case "test":
+				log.Printf("> Mail test: %s\n", mailObj.Data)
+
+			case "ice":
+				// peerConnection.AddICECandidate
+				break
+
+			case "offer_sdp":
+				offer := webrtc.SessionDescription{}
+				err = Decode(mailObj.Data, &offer)
+				if err != nil {
+					log.Println("[!] Cannot Decode:", err)
+					break Loop
+				}
+
+				// Set the remote SessionDescription
+				err = peerConnection.SetRemoteDescription(offer)
+				if err != nil {
+					log.Println("[!] Cannot SetRemoteDescription:", err)
+					break Loop
+				}
+				log.Println("Set remote description")
+
+				// Create an answer
+				answer, err := peerConnection.CreateAnswer(nil)
+				if err != nil {
+					log.Println("[!] Cannot CreateAnswer:", err)
+					break Loop
+				}
+
+				// Sets the LocalDescription, and starts our UDP listeners
+				err = peerConnection.SetLocalDescription(answer)
+				if err != nil {
+					log.Println("[!] Cannot SetLocalDescription:", err)
+					break Loop
+				}
+				log.Println("Set local description")
+
+				localSession, err := Encode(answer)
+				if err != nil {
+					log.Println("[!] Cannot Encode:", err)
+					return
+				}
+
+				err = sendMail(conn, req.ClientID, MailPacket{ID: "answer_sdp", Data: localSession})
+				if err != nil {
+					log.Println("[!] Cannot sendMail:", err)
+					break Loop
+				}
+				log.Println("Send answer")
+			}
 
 		}
 	}

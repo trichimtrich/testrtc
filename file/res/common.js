@@ -1,6 +1,16 @@
 //// Declare in global scope
 let wsConn, myID, partnerID;
 let rtcPeer, localSDP, remoteSDP;
+let mailCallback = {};
+mailCallback.test = function(obj, cid) {
+    log(`Mail test: ${obj["data"]}`, true);
+}
+
+mailCallback.ice = function(obj, cid) {
+    log("Recv ice candidate", true);
+    var can = JSON.parse(obj["data"]);
+    rtcPeer.addIceCandidate(new RTCIceCandidate(can));
+}
 
 
 //// General
@@ -20,7 +30,7 @@ document.getElementById("txtID").onchange = function (event) {
 
 
 //// Utils
-function log (msg, isMail) {
+function log(msg, isMail) {
     var pp = document.createElement("p");
     pp.textContent= msg;
     if (isMail != undefined) {
@@ -121,7 +131,9 @@ wsConn.onmessage = function (e) {
             try {
                 mailObj = JSON.parse(d["data"]);
                 setPartner(d["cid"]);
-                handleMail(mailObj, d["cid"]);
+                if ((typeof mailObj["id"] === "string") && (typeof mailCallback[mailObj["id"]] === "function"))
+                    mailCallback[mailObj["id"]](mailObj, d["cid"]);
+                // prototype pollution pls?
             } catch {
                 // test data maybe, not in JSON format
             }
@@ -151,6 +163,10 @@ function basicRTC() {
         ],
     });
 
+    rtcPeer.onconnectionstatechange = function(event) {
+        log(`connectionState: ${this.connectionState}`);
+    }
+
 
     // keep track on state, 'connected' => our GOAL!
     rtcPeer.oniceconnectionstatechange = function(event) {
@@ -169,6 +185,7 @@ function basicRTC() {
             // ...
         } else {
             log(`Got icecandidate: ${JSON.stringify(event.candidate)}`);
+            wsConn.sendMail(partnerID, "ice", JSON.stringify(event.candidate));
         }
     }
 }

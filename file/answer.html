@@ -13,18 +13,10 @@ Im waiting for partner to send offer...
 <script src="/file/res/common.js"></script>
 <script>
     //// WebSocket handler with my role
-    function handleMail(mailObj, senderID) {
-        switch (mailObj["id"]) {
-            case "test":
-                log(`Mail test: ${mailObj["data"]}`, true);
-                break;
-
-            case "offer_sdp":
-                log("Recv offer sdp", true);
-                remoteSDP = mailObj["data"];
-                startAnswer();
-                break;
-        }
+    mailCallback.offer_sdp = function(obj, cid) {
+        log("Recv offer sdp", true);
+        remoteSDP = mailObj["data"];
+        startAnswer();
     }
 
     //// WebRTC handler with my Role
@@ -49,20 +41,32 @@ Im waiting for partner to send offer...
         .then(() => {
             log("Set remote description - OK. Create Answer ...");
             rtcPeer.createAnswer()
-            .then(function (localDesc) {
-                log("Got local description via createAnswer. Sending answer...");
+            .then(localDesc => {
+                log("Got local description via createAnswer");
+                rtcPeer.setLocalDescription(localDesc)
+                .then(e => {
+                    log("Set local description - OK. Sending answer...");
 
-                // got local description?
-                localSDP = btoa(JSON.stringify(localDesc));
+                    // got local description?
+                    localSDP = btoa(JSON.stringify(localDesc));
 
-                // send sdp back?
-                wsConn.sendMail(partnerID, "answer_sdp", localSDP);
+                    // send sdp back?
+                    wsConn.sendMail(partnerID, "answer_sdp", localSDP);
+                })
+                .catch(err => {
+                    log("[!] setLocalDescription failed");
+                    log(err);
+                });
             })
+            .catch(err => {
+                log("[!] createAnswer failed");
+                log(err);
+            });
         })
         .catch(err => {
             log("[!] setRemoteDescription failed");
             log(err);
-        })
+        });
     }
 
 

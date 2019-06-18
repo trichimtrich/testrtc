@@ -10,6 +10,13 @@
             damn.innerHTML += msg + "<br>";
         }
 
+        function sendMsg() {
+            var msg = txtMsg.value;
+            if (dataChannel) {
+                dataChannel.send(msg);
+            }
+        }
+
         var RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
         var RTCSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.webkitRTCSessionDescription;
         var RTCIceCandidate = window.RTCIceCandidate || window.mozRTCIceCandidate || window.webkitRTCIceCandidate;
@@ -17,7 +24,7 @@
 
         var pcConfig = { "iceServers": [{ "url": "stun:stun.l.google.com:19302" }] };
         var pcOptions = { optional: [{ DtlsSrtpKeyAgreement: true }] }
-        var pc = null;
+        var pc = null, dataChannel = null;
 
         navigator.getUserMedia = navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 
@@ -31,6 +38,20 @@
 
             pc = new RTCPeerConnection(pcConfig, pcOptions);
 
+            dataChannel = pc.createDataChannel("hihi", {});
+
+            dataChannel.onopen = function(event) {
+                log("Data Channel open");
+            }
+
+            dataChannel.onclose = function(event) {
+                log("Data Channel close");
+            }
+
+            dataChannel.onmessage = function(event) {
+                log(`[Recv] ${event.data}`);
+            }
+
             log("Start log");
 
             pc.onconnectionstatechange = function(event) {
@@ -40,11 +61,6 @@
             pc.oniceconnectionstatechange = function(event) {
                 log(`IceConnectionState: ${pc.iceConnectionState}`);
             } 
-
-            pc.onaddstream = function (obj) {
-                console.log("onaddstream");
-                console.log(obj);
-            }
 
             pc.onicecandidate = function (event) {
                 if (event.candidate) {
@@ -59,18 +75,12 @@
                 }
             }
 
-            navigator.getUserMedia({ video: false, audio: true }, function (stream) {
-                console.log("Got stream");
-                console.log(stream);
-
-                pc.addStream(stream);
-
-                pc.createOffer(function (offer) {
-                    pc.setLocalDescription(offer, function () {
-                        document.getElementById("offer").value = offer.sdp;
-                    }, error);
+            pc.createOffer(function (offer) {
+                pc.setLocalDescription(offer, function () {
+                    document.getElementById("offer").value = offer.sdp;
                 }, error);
             }, error);
+
         }
 
         function processAnswer() {
@@ -118,6 +128,8 @@
         </tbody>
     </table>
 
+    <input type="text" placeholder="Send message pls..." id="txtMsg">
+    <button onclick="sendMsg()">Send</button>
     <div id="damn"></div>
 
 

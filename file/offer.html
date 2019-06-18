@@ -13,33 +13,23 @@ Partner ID: <input id="txtID" placeholder="Input partner ID here..."><input id="
 <script src="/file/res/common.js"></script>
 <script>
     //// WebSocket handler with my role
-    function handleMail(mailObj, senderID) {
-        switch (mailObj["id"]) {
-            case "test":
-                log(`Mail test: ${mailObj["data"]}`, true);
-                break;
-
-            case "answer_sdp":
-                log("Recv answer sdp", true);
-                remoteSDP = mailObj["data"];
-                // decode remoteSDP
-                try {
-                    var remoteDesc = JSON.parse(atob(remoteSDP));
-                } catch(err) {
-                    log("[!] Cannot unserialize remoteSDP");
-                    log(err);
-                    log(remoteSDP);
-                    return;
-                }
-
-                rtcPeer.setRemoteDescription(remoteDesc)
-                .then(() => {
-                    log("Set remote description - OK");
-                });
-
-                break;
-
+    mailCallback.answer_sdp = function(obj, cid) {
+        log("Recv answer sdp", true);
+        remoteSDP = mailObj["data"];
+        // decode remoteSDP
+        try {
+            var remoteDesc = JSON.parse(atob(remoteSDP));
+        } catch(err) {
+            log("[!] Cannot unserialize remoteSDP");
+            log(err);
+            log(remoteSDP);
+            return;
         }
+
+        rtcPeer.setRemoteDescription(remoteDesc)
+        .then(() => {
+            log("Set remote description - OK");
+        });
     }
 
     //// WebRTC handler with my Role

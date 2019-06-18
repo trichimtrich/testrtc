@@ -10,6 +10,13 @@
             damn.innerHTML += msg + "<br>";
         }
 
+        function sendMsg() {
+            var msg = txtMsg.value;
+            if (dataChannel) {
+                dataChannel.send(msg);
+            }
+        }
+
         var RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
         var RTCSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.webkitRTCSessionDescription;
         var RTCIceCandidate = window.RTCIceCandidate || window.mozRTCIceCandidate || window.webkitRTCIceCandidate;
@@ -17,7 +24,7 @@
 
         var pcConfig = { "iceServers": [{ "url": "stun:stun.l.google.com:19302" }] };
         var pcOptions = { optional: [{ DtlsSrtpKeyAgreement: true }] }
-        var pc = null;
+        var pc = null, dataChannel = null;
 
         function error(e) {
             console.log("Error: " + e);
@@ -29,7 +36,6 @@
 
             pc = new RTCPeerConnection(pcConfig, pcOptions);
 
-
             log("Start log");
 
             pc.onconnectionstatechange = function (event) {
@@ -40,15 +46,24 @@
                 log(`IceConnectionState: ${pc.iceConnectionState}`);
             }
 
+            pc.ondatachannel = function(event) {
+                var chan = event.channel;
 
-            pc.onaddstream = function (obj) {
-                var video = document.getElementById("audio");
+                chan.onopen = function(event) {
+                    log("Data Channel open");
+                }
 
-                console.log("onaddstream");
-                console.log(obj);
-                video.src = URL.createObjectURL(obj.stream);
-                video.play();
+                chan.onclose = function(event) {
+                    log("Data channel close");
+                }
+
+                chan.onmessage = function(event) {
+                    log(`[Recv] ${event.data}`);
+                }
+
+                dataChannel = chan;
             }
+
 
             pc.onicecandidate = function (event) {
                 console.log("onicecandidate");
@@ -115,6 +130,8 @@
         </tbody>
     </table>
 
+    <input type="text" placeholder="Send message pls..." id="txtMsg">
+    <button onclick="sendMsg()">Send</button>
     <div id="damn"></div>
 
 

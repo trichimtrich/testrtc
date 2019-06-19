@@ -63,7 +63,7 @@ go run . -server localhost:5000
 
 - For golang client, as role `createOffer` (send sdp to other)
 ```
-go run . -server localhost:5000 -partnerID <other-client-id>
+go run . -server localhost:5000 -partner <other-client-id>
 ```
 
 - For manual webrtc in browser, check out `file\manual` directory. [Reference](http://research.edm.uhasselt.be/jori/page/Misc/QtWebRTC.html)

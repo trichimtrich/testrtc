@@ -2,6 +2,7 @@
 From ubuntu:bionic
 
 RUN apt-get update
+RUN apt-get install -y wget
 
 # Install golang
 WORKDIR /tmp

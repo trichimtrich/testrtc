@@ -10,9 +10,9 @@ RUN wget https://dl.google.com/go/go1.12.6.linux-amd64.tar.gz
 RUN tar -xvf go1.12.6.linux-amd64.tar.gz
 RUN mv go /usr/local
 
-RUN export GOROOT=/usr/local/go
-RUN export GOPATH=$HOME/go
-RUN export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+ENV GOROOT /usr/local/go
+ENV GOPATH /root/gopath
+ENV PATH "$GOPATH/bin:$GOROOT/bin:$PATH"
 
 # Install go dependencies
 RUN go get "github.com/pion/webrtc"

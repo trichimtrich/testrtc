@@ -50,7 +50,7 @@ docker-compose up
 
 ### Clients
 
-- For web client, access `file` directory for more detail
+- For web client, access `file` directory for more detail. `offer.html` & `answer.html`
 ```
 http://localhost:5000/file/
 ```

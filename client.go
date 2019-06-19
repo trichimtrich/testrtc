@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"github.com/pion/webrtc"
-	// "encoding/json"
 )
 
 
@@ -102,6 +101,31 @@ func clientLoop(conn *websocket.Conn, done chan struct{}, partnerID string) {
 
 	// if there is a partnerID , we should be in createOffer role
 	if partnerID != "" {
+		offer, err := peerConnection.CreateOffer(nil)
+		if err != nil {
+			log.Println("[!] Cannot CreateOffer:", err)
+			return
+		}
+		log.Println("Create Offer")
+
+		err = peerConnection.SetLocalDescription(offer)
+		if err != nil {
+			log.Println("[!] Cannot SetLocalDescription:", err)
+			return
+		}
+		log.Println("Set Local Description")
+
+		localSession, err := encodeSDP(offer)
+		if err != nil {
+			log.Println("[!] Cannot encodeSDP:", err)
+			return
+		}
+
+		err = sendMail(conn, partnerID, MailPacket{ID: "offer_sdp", Data: localSession})
+		if err != nil {
+			log.Println("[!] Cannot sendMail:", err)
+			return
+		}
 	}
 
 	Loop:
@@ -151,11 +175,30 @@ func clientLoop(conn *websocket.Conn, done chan struct{}, partnerID string) {
 				}
 				log.Println("AddIceCandidate:", ice.Candidate)
 
+			case "answer_sdp":
+				answer := webrtc.SessionDescription{}
+				err = decodeSDP(mailObj.Data, &answer)
+				if err != nil {
+					log.Println("[!] Cannot decodeSDP:", err)
+					break Loop
+				}
+
+				// Set the remote SessionDescription
+				err = peerConnection.SetRemoteDescription(answer)
+				if err != nil {
+					log.Println("[!] Cannot SetRemoteDescription:", err)
+					break Loop
+				}
+				log.Println("Set remote description")
+
+				// do nothing, suppose the state is connected
+
+
 			case "offer_sdp":
 				offer := webrtc.SessionDescription{}
-				err = Decode(mailObj.Data, &offer)
+				err = decodeSDP(mailObj.Data, &offer)
 				if err != nil {
-					log.Println("[!] Cannot Decode:", err)
+					log.Println("[!] Cannot decodeSDP:", err)
 					break Loop
 				}
 
@@ -173,6 +216,7 @@ func clientLoop(conn *websocket.Conn, done chan struct{}, partnerID string) {
 					log.Println("[!] Cannot CreateAnswer:", err)
 					break Loop
 				}
+				log.Println("Create Answer")
 
 				// Sets the LocalDescription, and starts our UDP listeners
 				err = peerConnection.SetLocalDescription(answer)
@@ -182,9 +226,9 @@ func clientLoop(conn *websocket.Conn, done chan struct{}, partnerID string) {
 				}
 				log.Println("Set local description")
 
-				localSession, err := Encode(answer)
+				localSession, err := encodeSDP(answer)
 				if err != nil {
-					log.Println("[!] Cannot Encode:", err)
+					log.Println("[!] Cannot encodeSDP:", err)
 					return
 				}
 

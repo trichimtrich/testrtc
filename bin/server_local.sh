@@ -11,5 +11,5 @@ fi
 
 CURDIR=$(pwd)
 cd $WORKDIR
-go run $WORKDIR -host 0.0.0.0:5000
+go run . -host 0.0.0.0:5000
 cd $CURDIR

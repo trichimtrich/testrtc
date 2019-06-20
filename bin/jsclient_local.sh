@@ -11,5 +11,5 @@ fi
 
 CURDIR=$(pwd)
 cd $WORKDIR
-node $WORKDIR/chrome.js $@
+node chrome.js $@
 cd $CURDIR

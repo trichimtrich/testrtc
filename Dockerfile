@@ -22,6 +22,8 @@ RUN go get "github.com/gorilla/websocket"
 RUN curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
 RUN apt-get install -y nodejs
 
+# Install puppeteer
+RUN npm install -g puppeteer
 
 # our volume
 RUN mkdir -p /testrtc

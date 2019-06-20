@@ -15,4 +15,4 @@ if [ $(id -u) != 0 ]; then
 fi
 
 docker build -t testrtc-img $WORKDIR
-docker run -it testrtc-img go run . $@
+docker run -v $WORKDIR:/testrtc -it testrtc-img go run . $@

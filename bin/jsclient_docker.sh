@@ -15,4 +15,4 @@ if [ $(id -u) != 0 ]; then
 fi
 
 docker build -t testrtc-img $WORKDIR
-docker run -it testrtc-img node chrome.js $@
+docker run -v $WORKDIR:/testrtc -it testrtc-img node chrome.js $@

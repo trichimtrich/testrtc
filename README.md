@@ -127,7 +127,15 @@ go run . -server localhost:5000 -partner <other-client-id>
 
 ## Result
 
-`not yet ... 🤫`
+`...` 🤫
+
+## What-ToDo-next
+
+- Pure implementation in other language (c++ / node / python / rust / ...)
+- Check time frame
+- Add data / media channel
+- Check ping / packet lost on transfer
+- Add automate check
 
 ## License
 

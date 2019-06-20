@@ -83,7 +83,7 @@ go run .
 go run . -host 0.0.0.0:5000
 ```
 
-- Or using `docker-compose` (port `5000`)
+- Or `bin/server_local.sh` / `bin/server_docker.sh` (port `5000`)
 
 - Check out `go run . --help`
 

@@ -2,7 +2,7 @@
 From ubuntu:bionic
 
 RUN apt-get update
-RUN apt-get install -y wget git
+RUN apt-get install -y wget git curl python-software-properties
 
 # Install golang
 WORKDIR /tmp
@@ -17,6 +17,10 @@ ENV PATH "$GOPATH/bin:$GOROOT/bin:$PATH"
 # Install go dependencies
 RUN go get "github.com/pion/webrtc"
 RUN go get "github.com/gorilla/websocket"
+
+# Install nodejs
+RUN curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+RUN apt-get install -y nodejs
 
 
 # our volume

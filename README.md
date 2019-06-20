@@ -33,6 +33,44 @@ Users can add other implementation of clients or testing roles based on the sign
 
 ## Deploy
 
+### Dependencies
+
+- We have `Dockerfile` and `bin` directory, make sure to check them out
+- If you want to run directly in host server, follow these steps (example in `ubuntu`)
+
+1. Install `go`, export `GOROOT`, `GOPATH`
+```
+cd /tmp
+wget https://dl.google.com/go/go1.12.6.linux-amd64.tar.gz
+tar -xvf go1.12.6.linux-amd64.tar.gz
+sudo mv go /usr/local
+
+# ...
+export GOROOT=/usr/local/go
+export GOPATH=$HOME/my-go-path
+export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+```
+
+2. Install `go` dependencies
+```
+go get "github.com/pion/webrtc"
+go get "github.com/gorilla/websocket"
+```
+
+3. Install `nodejs`
+```
+curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+sudo apt-get install nodejs
+```
+
+4. Install `puppeteer` module
+```
+sudo npm install -g puppeteer
+```
+
+5. Good to go...
+
+
 ### Signal server
 
 - Run server at default setting `localhost:5000`

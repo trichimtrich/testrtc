@@ -9,4 +9,7 @@ else
     exit 1
 fi
 
+CURDIR=$(pwd)
+cd $WORKDIR
 node $WORKDIR/chrome.js $@
+cd $CURDIR

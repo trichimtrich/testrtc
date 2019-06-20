@@ -65,7 +65,7 @@ sudo apt-get install nodejs
 
 4. Install `puppeteer` module
 ```
-sudo npm install -g puppeteer
+npm install puppeteer
 ```
 
 5. Good to go...

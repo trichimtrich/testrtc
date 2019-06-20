@@ -66,8 +66,24 @@ Partner ID: <input id="txtID" placeholder="Input partner ID here..."><input id="
         });
     }
 
-
     
+    // Partner id is in parameter
+    (function () {
+        var queryDict = {}
+        location.search.substr(1).split("&").forEach(function(item) {
+            queryDict[item.split("=")[0]] = item.split("=")[1]
+        });
+        if (typeof queryDict["id"] === "string") {
+            var id = decodeURI(queryDict["id"]);
+
+            wsConn.oldOpen = wsConn.onopen;
+            wsConn.onopen = function () {
+                this.oldOpen();
+                setPartner(id);
+                startOffer();
+            }
+        }
+    })();
 
 
 

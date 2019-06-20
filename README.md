@@ -104,7 +104,7 @@ go run . -server localhost:5000
 go run . -server localhost:5000 -partner <other-client-id>
 ```
 
-- For manual webrtc in browser, check out `file\manual` directory. [Reference](http://research.edm.uhasselt.be/jori/page/Misc/QtWebRTC.html)
+- For manual webrtc in browser, check out `file/manual` directory. [Reference](http://research.edm.uhasselt.be/jori/page/Misc/QtWebRTC.html)
 
 ## Result
 

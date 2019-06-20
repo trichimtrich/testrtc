@@ -14,5 +14,5 @@ if [ $(id -u) != 0 ]; then
     exit 1
 fi
 
-docker build --no-cache -t testrtc-img $WORKDIR
+docker build -t testrtc-img $WORKDIR
 docker run -it testrtc-img go run . $@

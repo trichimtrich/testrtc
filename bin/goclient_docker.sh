@@ -1,9 +1,9 @@
 #!/bin/bash
 
 if [ -e main.go ]; then
-    WORKDIR="./"
+    WORKDIR=$(realpath .)
 elif [ -e ../main.go ]; then
-    WORKDIR="../"
+    WORKDIR=$(realpath ..)
 else
     echo "[!] Please change directory to bin or root of the repo"
     exit 1

@@ -33,10 +33,10 @@ Users can add other implementation of clients or testing roles based on the sign
 
 ## Deploy
 
-### Dependencies
-
 - We have `Dockerfile` and `bin` directory, make sure to check them out
 - If you want to run directly in host server, follow these steps (example in `ubuntu`)
+
+### Dependencies
 
 1. Install `go`, export `GOROOT`, `GOPATH`
 ```

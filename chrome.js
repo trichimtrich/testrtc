@@ -1,7 +1,7 @@
 const puppeteer = require("puppeteer");
 
 async function capture(url) {
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({headless: true, ignoreHTTPSErrors: true, args: ["--no-sandbox"]});
     const page = await browser.newPage();
     await page.goto(url);
     page.on("console", msg => {

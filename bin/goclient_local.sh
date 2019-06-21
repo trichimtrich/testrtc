@@ -9,4 +9,7 @@ else
     exit 1
 fi
 
-go run $WORKDIR $@
+CURDIR=$(pwd)
+cd $WORKDIR
+go run . $@
+cd $CURDIR
